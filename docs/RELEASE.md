@@ -1,0 +1,28 @@
+# Release 0.0.6
+
+Package: `@nanmicoder/dsh-skills-hub`. Repository: `NanmiCoder/dsh-skills-hub`. Tag: `v0.0.6`. npm channel: `latest`. This plugin release is independent of the host version and supports exact `0.2.1-rc.1`, `0.2.1-rc.2` (recommended) and `0.2.1-rc.3` (preview).
+
+## Before publication
+
+1. Run `pnpm install --frozen-lockfile` and `pnpm pack:check` on the intended release commit.
+2. Perform the exact-host acceptance described in [COMPATIBILITY.md](COMPATIBILITY.md), including a browser mount and real install/uninstall in a temporary skills root. Record the host tag, plugin commit, commands and results; fixture tests alone do not prove host acceptance.
+3. Review `git diff`, generated `lib/`, package contents and release notes. Commit source and build artifacts together. Never include credentials, profiles or acceptance-home contents.
+4. Confirm npm account permission for the `@nanmicoder` scope. The unscoped name is owned by someone else. Changing GitHub visibility alone does not grant npm permissions.
+
+## GitHub Actions publication
+
+Publish after the compatibility PR is merged into `main`. Revalidate the merged commit, then create and push `v0.0.6` from that commit to run `.github/workflows/release.yml`. Creating the PR alone does not publish. A manual workflow dispatch with version `0.0.6` also publishes npm, but the GitHub Release job runs only for a tag push; prefer the tag flow for the complete release.
+
+The reusable `verify.yml` must pass Node 22.19/24 checks, Windows packaging, and every Linux/Windows host target from `compatibility.json`. The Node 24 build uploads one tarball and SHA-256 checksum. Each host verifies those bytes; the aggregate gate requires all installation, cold-start, trust-fence, bundle, skill mutation and restart-cache records before publishing. The publication job verifies and publishes that exact artifact using npm 11.19.0, without rebuilding it.
+
+After npm succeeds, `registry-smoke` downloads the exact published version, compares SHA-256/SRI with the candidate and installs it through a fresh real host. A GitHub Release is published only after that smoke succeeds. If smoke fails, the npm version remains published. For a transient outage, rerun the failed smoke job; for a defective package, release a new patch. Never reuse the published version.
+
+Configure npm Trusted Publishing for GitHub owner `NanmiCoder`, repository `dsh-skills-hub`, workflow `release.yml`, environment `npm`, allowing direct publication. OIDC uses `id-token: write`; routine releases need no local npm login and no stored npm token. The existing AgentTeams trust binding is package-specific and does not authorize this new package.
+
+For a brand-new package, npm requires an initial publication before its trusted publisher can be configured. If initial publication uses a short-lived granular token, place it only in this repository's `npm` environment as `NPM_TOKEN`, publish through the same Action, then remove/revoke the bootstrap token after configuring OIDC. Never commit or print credentials. npm may require browser-based security-key verification for these account operations.
+
+Before tagging, commit all source and generated artifacts, confirm the version and release notes, and ensure the working tree is clean. Registry preflight rejects duplicate versions, repository collisions and backwards movement of `latest`. Do not move a published tag. The exact-commit bypass supported by the standalone preflight utility is not used by the online publication workflow.
+
+## After publication / recovery
+
+Install `@nanmicoder/dsh-skills-hub@0.0.6` into an isolated profile and repeat the smoke flow. Compare the downloaded package and expected version before announcing availability. If a release is faulty, publish a new fixed version or deprecate the faulty version with a clear message; do not rewrite published Git tags or assume deleting a GitHub Release retracts npm. Preserve user skills when removing or replacing the plugin.
