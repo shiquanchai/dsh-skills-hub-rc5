@@ -23,6 +23,7 @@ import type { Stats } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { clawhubProvider } from './clawhub-provider.ts'
+import { retryTransient, errorCode } from './fs-retry.ts'
 import { skillhubProvider } from './skillhub-provider.ts'
 import { getMarketSkillDetail, resolveMarketSkill, withMarketOwner } from './market-service.ts'
 import { withProviderConfiguration } from './provider-fetch.ts'
@@ -64,7 +65,18 @@ const inFlight = new Map<string, Promise<unknown>>()
 /** File mode of the provenance sidecar; the skills tree is ordinary user data. */
 const META_FILE_MODE = 0o644
 
-/** Naming prefix of the hidden staging directory inside the skills root. */
+/**
+ * Work directory beside the skills root.
+ *
+ * Staging *inside* the skills root looks convenient, but that root is watched by
+ * the host's filesystem skill provider: a multi-file install takes long enough
+ * for the watcher to scan the half-written staging directory, and on Windows a
+ * directory rename fails with `EPERM`/`EBUSY` while another handle is open. A
+ * sibling keeps the rename same-volume (the parent is the same volume by
+ * construction) without exposing partial files to the watcher.
+ */
+const WORK_DIR_NAME = '.skills-hub-work'
+/** Naming prefix of the hidden staging directory below the work directory. */
 const STAGING_PREFIX = '.skills-hub-install-'
 /** Naming prefix of the hidden directory a removal is renamed into first. */
 const TRASH_PREFIX = '.skills-hub-trash-'
@@ -134,6 +146,29 @@ function sha256Hex(content: string): string {
 /** `true` when `error` is a Node filesystem error with the given code. */
 function hasErrorCode(error: unknown, code: string): boolean {
   return typeof error === 'object' && error !== null && (error as NodeJS.ErrnoException).code === code
+}
+
+/**
+ * Parent directory for staging and trash: a hidden sibling of the skills root,
+ * which is the same volume by construction and outside the watched tree. Falls
+ * back to the skills root itself when its parent cannot be created (a read-only
+ * or protected parent must not make installation impossible).
+ */
+async function resolveWorkDirectory(skillsRoot: string): Promise<string> {
+  const parent = path.dirname(skillsRoot)
+  if (parent === skillsRoot) return skillsRoot
+  const candidate = path.join(parent, WORK_DIR_NAME)
+  try {
+    await fs.mkdir(candidate, { recursive: true })
+    return candidate
+  } catch {
+    return skillsRoot
+  }
+}
+
+/** Delete one tree, retrying the Windows sharing violations antivirus produces. */
+async function removeTree(target: string): Promise<void> {
+  await retryTransient(() => fs.rm(target, { recursive: true, force: true }))
 }
 
 /** The upstream detail for a skill, or the market's own "not installable" verdict. */
@@ -308,12 +343,14 @@ async function performInstall(
   await assertInstallTargetFree(target, dirName, id)
 
   await fs.mkdir(skillsRoot, { recursive: true })
-  // Staging in the target's own parent makes the publishing rename
-  // same-filesystem by construction: there is no cross-device copy path to get
-  // wrong, and a crash leaves only a hidden directory that no scanner reads.
+  // Staging in a hidden sibling of the skills root keeps the publishing rename
+  // same-filesystem by construction (the parent is on the same volume) while
+  // keeping the half-written tree out of the watched skills root. Falls back to
+  // the root when the parent is not writable.
+  const workRoot = await resolveWorkDirectory(skillsRoot)
   let stagingDir: string
   try {
-    stagingDir = await fs.mkdtemp(path.join(skillsRoot, STAGING_PREFIX))
+    stagingDir = await fs.mkdtemp(path.join(workRoot, STAGING_PREFIX))
   } catch {
     throw new MarketInstallError(500, MARKET_ERROR_CODES.diskError, 'Cannot create a staging directory for the install')
   }
@@ -400,7 +437,7 @@ async function performInstall(
 
     await assertInstallTargetFree(target, dirName, id)
     try {
-      await fs.rename(stagingDir, target)
+      await retryTransient(() => fs.rename(stagingDir, target))
     } catch (error) {
       // A directory/file that appeared between the pre-assert and the rename is a
       // name conflict (the exact race `assertInstallTargetFree` cannot close), not
@@ -413,7 +450,12 @@ async function performInstall(
           `Skill directory "${dirName}" is occupied by something else (name-conflict); remove it manually to continue`,
         )
       }
-      throw new MarketInstallError(500, MARKET_ERROR_CODES.diskError, 'Failed to publish the skill to disk')
+      const code = errorCode(error)
+      throw new MarketInstallError(
+        500,
+        MARKET_ERROR_CODES.diskError,
+        `Failed to publish the skill to disk${code === undefined ? '' : ` (${code})`}`,
+      )
     }
     return {
       installedPath: target,
@@ -433,7 +475,8 @@ async function performInstall(
     }
   } finally {
     // A no-op once the rename succeeded (the path no longer exists).
-    await fs.rm(stagingDir, { recursive: true, force: true }).catch(() => undefined)
+    await removeTree(stagingDir).catch(() => undefined)
+    if (workRoot !== skillsRoot) await fs.rmdir(workRoot).catch(() => undefined)
   }
 }
 
@@ -497,13 +540,22 @@ export async function uninstallMarketSkill(
   // Rename out of the skills root's namespace first, then delete: the rename is
   // the atomic step that unpublishes the skill, so an interruption can only
   // leave an inert, dot-prefixed directory behind — never a half-deleted skill.
-  const trash = resolveInside(skillsRoot, `${TRASH_PREFIX}${dirName}-${randomUUID()}`)
+  // The trash lives in the work directory beside the root so the host's skill
+  // watcher never rescans the tree being deleted (same volume by construction).
+  const workRoot = await resolveWorkDirectory(skillsRoot)
+  const trash = path.join(workRoot, `${TRASH_PREFIX}${dirName}-${randomUUID()}`)
   try {
-    await fs.rename(target, trash)
-  } catch {
-    throw new MarketInstallError(500, MARKET_ERROR_CODES.diskError, 'Failed to remove the skill directory')
+    await retryTransient(() => fs.rename(target, trash))
+  } catch (error) {
+    const code = errorCode(error)
+    throw new MarketInstallError(
+      500,
+      MARKET_ERROR_CODES.diskError,
+      `Failed to remove the skill directory${code === undefined ? '' : ` (${code})`}`,
+    )
   }
-  await fs.rm(trash, { recursive: true, force: true }).catch(() => undefined)
+  await removeTree(trash).catch(() => undefined)
+  if (workRoot !== skillsRoot) await fs.rmdir(workRoot).catch(() => undefined)
 
   return { removedPath: target, skill: await refreshRemovedSkill(source, slug, id, dirName, meta, headline) }
 }

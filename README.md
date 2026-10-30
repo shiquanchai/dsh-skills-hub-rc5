@@ -19,7 +19,7 @@
 
 搜索 ClawHub 和 SkillHub 中的技能，阅读使用说明，再安装到 Harness。市场安装的技能和本机已有技能，都可以在「已安装技能」中查看和管理。
 
-当前版本：**0.0.7**，适配 **DeepSeek Harness 0.2.1-rc.1 / rc.2 / rc.3 / rc.5**（推荐 rc.5），补充 rc.5 宿主兼容与验收记录。[更新说明](./release-notes/v0.0.7.md)
+当前版本：**0.0.8**，适配 **DeepSeek Harness 0.2.1-rc.1 / rc.2 / rc.3 / rc.5**（推荐 rc.5），修复 Windows 下市场技能安装/卸载遇到瞬时文件占用时报错的问题。[更新说明](./release-notes/v0.0.8.md)
 
 <p align="center">
   <img src="./assets/readme/marketplace.png" width="100%" alt="Skills Hub 技能市场：分类、搜索、筛选和精选技能卡片。">
@@ -44,18 +44,18 @@
 **npm 包名（推荐，带版本号）**
 
 ```text
-@nanmicoder/dsh-skills-hub@0.0.7
+@nanmicoder/dsh-skills-hub@0.0.8
 ```
 
 **或 GitHub 仓库地址**
 
 ```text
-https://github.com/NanmiCoder/dsh-skills-hub
+https://github.com/shiquanchai/dsh-skills-hub-rc5
 ```
 
 点击 **安装 → 立即启用**，然后从侧栏进入 **技能市场**。更新后若宿主提示重启，请完全退出再重新打开。
 
-如果官方 npm 源尚未发布 0.0.7，或你使用的是本地构建，请在插件页选择「从文件安装」并选中 `nanmicoder-dsh-skills-hub-0.0.7.tgz`；也可以直接执行：
+如果官方 npm 源尚未发布 0.0.8，或你使用的是本地构建，请在插件页选择「从文件安装」并选中 `nanmicoder-dsh-skills-hub-0.0.8.tgz`；也可以直接执行：
 
 ```text
 dsh plugin --profile desktop add <tarball 的绝对路径>
@@ -88,6 +88,6 @@ Skills Hub 的技能全部来自 [ClawHub](https://clawhub.ai) 和 [SkillHub](ht
 - **技能版权归原作者所有**，以每个技能自己声明的许可证为准。本仓库的 MIT 许可证只适用于 Skills Hub 插件自身的代码，不适用于任何技能。
 - **安装时从上游实时下载**。本仓库不托管、不转售任何技能内容。随插件发布的精选清单只包含名称、简介、分类和下载数等索引信息，用于展示，并附带指向原始页面的链接。
 - **ClawHub、SkillHub 及其标识归各自所有者所有**。Skills Hub 是独立的社区项目，与 ClawHub、SkillHub 及 DeepSeek 均无隶属或背书关系。
-- 如果你是技能作者或平台方，希望调整或移除展示的信息，请[提交 issue](https://github.com/NanmiCoder/dsh-skills-hub/issues)，我们会尽快处理。
+- 如果你是技能作者或平台方，希望调整或移除展示的信息，请[提交 issue](https://github.com/shiquanchai/dsh-skills-hub-rc5/issues)，我们会尽快处理。
 
-[反馈问题](https://github.com/NanmiCoder/dsh-skills-hub/issues) · [高级配置](./docs/CONFIGURATION.md) · [参与开发](./CONTRIBUTING.md) · [MIT 许可证](./LICENSE)
+[反馈问题](https://github.com/shiquanchai/dsh-skills-hub-rc5/issues) · [高级配置](./docs/CONFIGURATION.md) · [参与开发](./CONTRIBUTING.md) · [MIT 许可证](./LICENSE)

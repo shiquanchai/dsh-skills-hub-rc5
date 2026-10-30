@@ -1,6 +1,6 @@
 {
   "name": "@nanmicoder/dsh-skills-hub",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Skills Hub for DeepSeek Harness: browse, preview, install and remove third-party skills from ClawHub and SkillHub inside the DSH Web GUI.",
   "type": "module",
   "main": "lib/index.js",
@@ -139,13 +139,13 @@
     "name": "程序员阿江 (Relakkes)",
     "url": "https://github.com/NanmiCoder"
   },
-  "homepage": "https://github.com/NanmiCoder/dsh-skills-hub#readme",
+  "homepage": "https://github.com/shiquanchai/dsh-skills-hub-rc5#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NanmiCoder/dsh-skills-hub.git"
+    "url": "git+https://github.com/shiquanchai/dsh-skills-hub-rc5.git"
   },
   "bugs": {
-    "url": "https://github.com/NanmiCoder/dsh-skills-hub/issues"
+    "url": "https://github.com/shiquanchai/dsh-skills-hub-rc5/issues"
   },
   "keywords": [
     "dsh",

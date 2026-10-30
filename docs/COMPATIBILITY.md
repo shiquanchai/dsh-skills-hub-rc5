@@ -20,6 +20,16 @@ Use the exact source tag or installed desktop cohort, a temporary `DSH_HOME`, an
 
 `pnpm pack:check` covers static typing, source and manifest contracts, regression tests, clean build, release metadata and tarball import closure. It does not by itself certify a running desktop session or upstream network availability. Future host cohorts must repeat this acceptance before widening peer ranges.
 
+## 0.0.8 / Windows install durability — 2026-10-30
+
+The reported desktop (0.2.1-rc.5, Windows) showed **Failed to publish the skill to disk** when installing from the market. The install pipeline staged files inside the skills root and then renamed the staging directory into place. That root is watched by the host's filesystem skill provider, and Windows antivirus/indexing opens freshly written files; a multi-file install exceeds the watcher's 200 ms stability threshold, so the rename can hit `EPERM` while another handle is still open. Uninstall showed the same failure when deleting the tree.
+
+Reproduced without the UI: writing 40 files into a staging directory below the skills root and renaming immediately failed with `EPERM` 6 times in 30 runs. Staging the same payload in a hidden sibling of the skills root, or retrying the rename with backoff, both produced 20/20 successes; the release combines both. Uninstall now renames into a trash directory in the same sibling work directory and deletes it with the same retry policy.
+
+`install-service` changes: work directory `.skills-hub-work` beside the skills root (falls back to the root when the parent is not writable), transient-code retry (`EPERM`/`EACCES`/`EBUSY`, 8 attempts, 25 ms exponential backoff) for publish rename, uninstall rename and tree removal, and the OS code appended to disk-failure messages (never a path). The retry policy lives in `src/market/fs-retry.ts` with unit coverage.
+
+Verification: both `tsc` configurations pass; 110 of 111 tests pass, the remaining failure is the pre-existing Windows symlink fixture that needs a privilege the account lacks. Through the compiled service, `planning-with-files` (36 files) and `wps-office` (9 files) installed and uninstalled cleanly, the skills root was left empty and the work directory was removed.
+
 ## 0.0.7 / Harness 0.2.1-rc.5 — 2026-10-30
 
 The reported desktop was **0.2.1-rc.5**; 0.0.6 peers stopped at rc.3, so the host's compatibility gate refused the plugin with `incompatible-version` before any code ran.

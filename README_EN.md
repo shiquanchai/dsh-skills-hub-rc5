@@ -19,7 +19,7 @@
 
 Search ClawHub and SkillHub, read a skill’s instructions, and install it into Harness. Manage marketplace installations and existing local skills together in **Installed**.
 
-Current version: **0.0.7**, targeting **DeepSeek Harness 0.2.1-rc.1 / rc.2 / rc.3 / rc.5**; rc.5 is recommended. This release adds rc.5 host compatibility and its acceptance record. [Release notes](./release-notes/v0.0.7.md)
+Current version: **0.0.8**, targeting **DeepSeek Harness 0.2.1-rc.1 / rc.2 / rc.3 / rc.5**; rc.5 is recommended. This release fixes intermittent Windows install/uninstall failures caused by transient file sharing. [Release notes](./release-notes/v0.0.8.md)
 
 <p align="center">
   <img src="./assets/readme/marketplace.png" width="100%" alt="Skills Hub marketplace with categories, search, filters and curated skill cards.">
@@ -44,18 +44,18 @@ The mainland mirror may lag behind new releases. If the plugin is not found, swi
 **npm package name with version (recommended)**
 
 ```text
-@nanmicoder/dsh-skills-hub@0.0.7
+@nanmicoder/dsh-skills-hub@0.0.8
 ```
 
 **Or the GitHub repository URL**
 
 ```text
-https://github.com/NanmiCoder/dsh-skills-hub
+https://github.com/shiquanchai/dsh-skills-hub-rc5
 ```
 
 Click **Install → Enable now**, then open **Skills Hub** from the sidebar. If the host requests a restart after updating, fully quit and reopen it.
 
-If 0.0.7 is not yet on the official npm registry, or you are installing a local build, choose **Install from file** and select `nanmicoder-dsh-skills-hub-0.0.7.tgz`, or run:
+If 0.0.8 is not yet on the official npm registry, or you are installing a local build, choose **Install from file** and select `nanmicoder-dsh-skills-hub-0.0.8.tgz`, or run:
 
 ```text
 dsh plugin --profile desktop add <absolute path to the tarball>
@@ -88,6 +88,6 @@ Every skill in Skills Hub comes from [ClawHub](https://clawhub.ai) or [SkillHub]
 - **Skills belong to their authors** and are governed by each skill's own license. This repository's MIT license covers the Skills Hub plugin code only, not any skill.
 - **Skills are downloaded from upstream at install time.** This repository does not host or resell skill content. The curated list shipped with the plugin contains only index information (name, summary, category, download counts) for display, with links back to the original pages.
 - **ClawHub, SkillHub and their marks belong to their respective owners.** Skills Hub is an independent community project, not affiliated with or endorsed by ClawHub, SkillHub or DeepSeek.
-- Authors or platform operators who want displayed information changed or removed can [open an issue](https://github.com/NanmiCoder/dsh-skills-hub/issues), and we'll handle it promptly.
+- Authors or platform operators who want displayed information changed or removed can [open an issue](https://github.com/shiquanchai/dsh-skills-hub-rc5/issues), and we'll handle it promptly.
 
-[Report an issue](https://github.com/NanmiCoder/dsh-skills-hub/issues) · [Advanced configuration](./docs/CONFIGURATION.md) · [Contribute](./CONTRIBUTING.md) · [MIT license](./LICENSE)
+[Report an issue](https://github.com/shiquanchai/dsh-skills-hub-rc5/issues) · [Advanced configuration](./docs/CONFIGURATION.md) · [Contribute](./CONTRIBUTING.md) · [MIT license](./LICENSE)
